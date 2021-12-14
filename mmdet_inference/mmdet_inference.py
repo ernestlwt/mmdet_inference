@@ -1,5 +1,7 @@
 import logging
 
+from mmcv import Config, DictAction
+from mmcv.cnn import fuse_conv_bn
 from mmdet.apis import init_detector, inference_detector
 import numpy as np
 
@@ -17,50 +19,60 @@ def batch(iterable, bs=1):
     for ndx in range(0, 1, bs):
         yield iterable[ndx:min(ndx + bs, l)]
 
-def setup(args):
-    '''
-    Create configs and perform basic setups.
-    '''
-
-    # critical args
-    config_file = args['config_file']
-    checkpoint_file = args['checkpoint_file']
-    device = args['device']
-    logger.info(f'mmdet_inference config file: {config_file}')
-    logger.info(f'mmdet_inference checkpoint file: {checkpoint_file}')
-    logger.info(f'mmdet_inference device: {device}')
-
 class MMDetInference:
     _defaults = {
         "config_file": "configs/faster_rcnn/faster_rcnn_r50_fpn_1x_coco.py",
         "checkpoint_file": "checkpoints/faster_rcnn_r50_fpn_1x_coco_20200130-047c8118.pth",
         "device": "cuda:0",
-        "max_batch_size": 8
+        "max_batch_size": 8,
+        "bgr": True
     }
 
-    def __init__(self, bgr=True, gpu_device="cuda:0", **kwargs):
+    def __init__(self, **kwargs):
         '''
-        Params
+        kwargs
         ---------
-        - gpu_device: str, "cpu" or "cuda:0", "cuda:1", etc
+        - config_file: str, path to config file
+        - checkpoint_file: str, path to checkpoint file
+        - device: str, "cpu" or "cuda:0", "cuda:1", etc
+        - max_batch_size: int
+        - bgr: boolean
         '''
 
-        self.cfgs = self._defaults
-        self.flip_channels = not bgr
-        self.model = init_detector(self.cfgs["config_file"], self.cfgs["checkpoint_file"], device=self.cfgs["device"])
+        self.cfg = self._defaults
+        self.cfg.update(kwargs)
+        self.cfg.update({"flip_channels": not self.cfg["bgr"]})
+        logger.info(f'mmdet_inference config file: {self.cfg["config_file"]}')
+        logger.info(f'mmdet_inference checkpoint file: {self.cfg["checkpoint_file"]}')
+        logger.info(f'mmdet_inference device: {self.cfg["device"]}')
+        self.model = init_detector(self.cfg["config_file"], self.cfg["checkpoint_file"], device=self.cfg["device"])
+        self.model = fuse_conv_bn(self.model)
+
+        self._detect([np.zeros((10,10,3), dtype=np.uint8)])
+        logger.info('Model warmed up!')
+        
 
     # TODO: make this detect by batch
     def _detect(self, imgs):
         results = []
+        inputs = []
+        heights = []
+        widths = []
+
+        if self.cfg["flip_channels"]:
+            imgs = imgs[:,:,:,::-1]
         for img in imgs:
-            if self.flip_channels:
-                img = img[:,:,::-1]
             height, width = img.shape[:2]
+            inputs.append(img)
+            heights.append(height)
+            widths.append(width)
         
+        predictions = inference_detector(self.model, inputs)
+        for p, w, h in zip(predictions, widths, heights):
             result = {
-                "image_width": width,
-                "image_height": height,
-                "predictions": inference_detector(self.model, img)
+                "image_width": w,
+                "image_height": h,
+                "predictions": p
             }
             results.append(result)
         return results
@@ -114,7 +126,6 @@ class MMDetInference:
             all_dets.append(dets)
         return all_dets
 
-    
     def detect_get_box_in(self, images, box_format='ltrb', classes=None, buffer_ratio=0.):
         '''
         Params
@@ -144,7 +155,7 @@ class MMDetInference:
             single = True
         
         all_dets = []
-        for this_batch in batch(images, bs=self.cfgs["max_batch_size"]):
+        for this_batch in batch(images, bs=self.cfg["max_batch_size"]):
             result = self._detect(this_batch)
             dets = self._postprocess(result)
 

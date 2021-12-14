@@ -1,7 +1,6 @@
 ### MMDET inference wrapper
 
 ##### TODO
-- inference by batch
 - test with different configs
 - weights download
 - packagify
