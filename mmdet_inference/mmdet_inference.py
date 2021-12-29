@@ -97,6 +97,8 @@ class MMDetInference:
             for bbox, label in zip(bboxes, labels):
                 l, t, r, b, score = bbox
                 pred_class_name = self.model.CLASSES[label]
+                if wanted_classes is not None and pred_class_name not in wanted_classes:
+                    continue
                     
                 w = r - l + 1
                 h = b - t + 1
@@ -161,7 +163,7 @@ class MMDetInference:
         all_dets = []
         for this_batch in batch(images, bs=self.cfg["max_batch_size"]):
             result = self._detect(this_batch)
-            dets = self._postprocess(result)
+            dets = self._postprocess(result, wanted_classes=classes)
 
             if len(all_dets) > 0:
                 all_dets.extend(dets)
