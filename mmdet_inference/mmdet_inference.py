@@ -45,7 +45,11 @@ class MMDetInference:
         logger.info(f'mmdet_inference config file: {self.cfg["config_file"]}')
         logger.info(f'mmdet_inference checkpoint file: {self.cfg["checkpoint_file"]}')
         logger.info(f'mmdet_inference device: {self.cfg["device"]}')
-        self.model = init_detector(self.cfg["config_file"], self.cfg["checkpoint_file"], device=self.cfg["device"])
+        try:
+            self.model = init_detector(self.cfg["config_file"], self.cfg["checkpoint_file"], device=self.cfg["device"])
+        except FileNotFoundError:
+            raise FileNotFoundError("Config and/or Checkpoint file not found")
+        
         self.model = fuse_conv_bn(self.model)
 
         self._detect([np.zeros((10,10,3), dtype=np.uint8)])
