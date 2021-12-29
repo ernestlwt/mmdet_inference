@@ -1,12 +1,15 @@
 ### MMDET inference wrapper
 
-##### TODO
-- test with different configs
-- weights download
+##### Configuration Files
+https://github.com/open-mmlab/mmdetection/tree/master/configs
 
-##### Notes
+
+##### Checkpoint Files
+At https://github.com/open-mmlab/mmdetection, look for ./configs/**\<model u are interested in>**/readme.md, there will be a link for you to download
+
+### Notes
 ```
-threshold should be set in config file. but can be added while initializing mmdetinference object too. might move this to the inference function instead of during model object initialization
+threshold should be set in config file. but can be added while initializing mmdetinference object too as per levan/det2. might move this to the inference function instead of during model object initialization for greater flexibility
 ```
 
 Tested with:
