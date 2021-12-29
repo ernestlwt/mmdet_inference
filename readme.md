@@ -3,7 +3,11 @@
 ##### TODO
 - test with different configs
 - weights download
-- packagify
+
+##### Notes
+```
+threshold should be set in config file. but can be added while initializing mmdetinference object too. might move this to the inference function instead of during model object initialization
+```
 
 Tested with:
 ```

@@ -25,7 +25,8 @@ class MMDetInference:
         "checkpoint_file": "checkpoints/faster_rcnn_r50_fpn_1x_coco_20200130-047c8118.pth",
         "device": "cuda:0",
         "max_batch_size": 8,
-        "bgr": True
+        "bgr": True,
+        "thresh": None
     }
 
     def __init__(self, **kwargs):
@@ -37,6 +38,7 @@ class MMDetInference:
         - device: str, "cpu" or "cuda:0", "cuda:1", etc
         - max_batch_size: int
         - bgr: boolean
+        - thresh: float or None
         '''
 
         self.cfg = self._defaults
@@ -96,6 +98,8 @@ class MMDetInference:
             dets = []
             for bbox, label in zip(bboxes, labels):
                 l, t, r, b, score = bbox
+                if self.cfg["thresh"] is not None and score < self.cfg['thresh']:
+                    continue
                 pred_class_name = self.model.CLASSES[label]
                 if wanted_classes is not None and pred_class_name not in wanted_classes:
                     continue
