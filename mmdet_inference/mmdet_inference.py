@@ -167,7 +167,7 @@ class MMDetInference:
         all_dets = []
         for this_batch in batch(images, bs=self.cfg["max_batch_size"]):
             result = self._detect(this_batch)
-            dets = self._postprocess(result, wanted_classes=classes)
+            dets = self._postprocess(result, box_format=box_format, wanted_classes=classes)
 
             if len(all_dets) > 0:
                 all_dets.extend(dets)
