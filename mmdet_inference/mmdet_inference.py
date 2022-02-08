@@ -65,9 +65,9 @@ class MMDetInference:
         heights = []
         widths = []
 
-        if self.cfg["flip_channels"]:
-            imgs = imgs[:,:,:,::-1]
         for img in imgs:
+            if self.cfg["flip_channels"]:
+                img = img[:,:,::-1]
             height, width = img.shape[:2]
             inputs.append(img)
             heights.append(height)
