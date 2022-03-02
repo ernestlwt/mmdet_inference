@@ -16,7 +16,7 @@ logger.addHandler(handler)
 
 def batch(iterable, bs=1):
     l = len(iterable)
-    for ndx in range(0, 1, bs):
+    for ndx in range(0, l, bs):
         yield iterable[ndx:min(ndx + bs, l)]
 
 class MMDetInference:
@@ -166,6 +166,7 @@ class MMDetInference:
         
         all_dets = []
         for this_batch in batch(images, bs=self.cfg["max_batch_size"]):
+            print(len(this_batch))
             result = self._detect(this_batch)
             dets = self._postprocess(result, box_format=box_format, wanted_classes=classes)
 
